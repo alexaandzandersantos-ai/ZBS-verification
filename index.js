@@ -384,11 +384,42 @@ client.on('messageCreate', async msg => {
 /* =====================
    SESSION EXPIRY
 ===================== */
-setInterval(() => {
+setInterval(async () => {
   const now = Date.now();
-  for (const [id, session] of client.sessions) {
+
+  for (const [userId, session] of client.sessions) {
     if (now - session.createdAt > 10 * 60 * 1000) {
-      client.sessions.delete(id);
+
+      // 🔔 Notify user
+      try {
+        const user = await client.users.fetch(userId);
+        await user.send(
+          '⏰ Your verification session has **expired**. Tagal mo kasi eh.\n\n' +
+          'For security reasons, verification sessions last only 10 minutes.\n' +
+          'Please return to the server and start verification again.'
+        );
+      } catch (e) {
+        // User DMs closed — ignore safely
+      }
+
+      // 🧾 Log to admin
+      try {
+        const logChannel = await client.channels.fetch(
+          process.env.LOG_CHANNEL_ID
+        );
+
+        await logChannel.send(
+          'VERIFICATION EXPIRED\n' +
+          'User: <@' + userId + '>\n' +
+          'Phone: ' + (session.phone ? session.phone : 'Not provided') + '\n' +
+          'Time: <t:' + Math.floor(Date.now() / 1000) + ':F>'
+        );
+      } catch (e) {
+        console.error('Failed to log expired session:', e);
+      }
+
+      // ❌ Remove session
+      client.sessions.delete(userId);
     }
   }
 }, 60000);
