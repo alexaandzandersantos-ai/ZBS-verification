@@ -44,26 +44,16 @@ const client = new Client({
 client.sessions = new Map();
 let lastVerifyMessageId = null;
 
-/* =====================
-   READY
-===================== */
-client.once('ready', async () => {
-  console.log('Bot online as ' + client.user.tag);
-sendOrReplaceVerificationMessage();
-
-  // SEND VERIFY BUTTON (DAILY)
-  async function sendOrReplaceVerificationMessage() {
+// SEND VERIFY BUTTON (DAILY)
+async function sendOrReplaceVerificationMessage() {
   try {
     const channel = await client.channels.fetch(process.env.VERIFY_CHANNEL_ID);
 
-    // Delete old verification message if it exists
     if (lastVerifyMessageId) {
       try {
         const oldMsg = await channel.messages.fetch(lastVerifyMessageId);
         await oldMsg.delete();
-      } catch (e) {
-        // message might already be deleted — ignore safely
-      }
+      } catch (e) {}
     }
 
     const verifyButton = new ButtonBuilder()
@@ -72,20 +62,27 @@ sendOrReplaceVerificationMessage();
       .setStyle(ButtonStyle.Primary);
 
     const newMsg = await channel.send({
-      content: "Ayo! Let’s see if you are a real human beauliever 👀\nClick the button below to start verification:",
+      content:
+        "Ayo! Let’s see if you are a real human beauliever 👀\n" +
+        "Click the button below to start verification:",
       components: [
         new ActionRowBuilder().addComponents(verifyButton)
       ]
     });
 
-    // Save new message ID
     lastVerifyMessageId = newMsg.id;
-
   } catch (err) {
     console.error('Failed to send/replace verification message:', err);
   }
 }
 
+/* =====================
+   READY
+===================== */
+client.once('ready', async () => {
+  console.log('Bot online as ' + client.user.tag);
+sendOrReplaceVerificationMessage();
+});
 
 /* =====================
    INTERACTIONS
@@ -401,20 +398,6 @@ setInterval(() => {
   sendOrReplaceVerificationMessage();
 }, 24 * 60 * 60 * 1000);
 
-/* =====================
-   VERIFY BUTTON MESSAGE
-===================== */
-async function sendVerifyMessage(channel) {
-  const verifyButton = new ButtonBuilder()
-    .setCustomId('start_verify')
-    .setLabel('Start Verification')
-    .setStyle(ButtonStyle.Primary);
-
-  await channel.send({
-    content: 'Ayo! Let\'s see if you are a real human beauliever. Click the button below to start verification:',
-	components: [new ActionRowBuilder().addComponents(verifyButton)]
-  });
-}
 
 /* =====================
    LOGIN
