@@ -42,17 +42,50 @@ const client = new Client({
    STORAGE
 ===================== */
 client.sessions = new Map();
+let lastVerifyMessageId = null;
 
 /* =====================
    READY
 ===================== */
 client.once('ready', async () => {
   console.log('Bot online as ' + client.user.tag);
+sendOrReplaceVerificationMessage();
 
-  // SEND VERIFY BUTTON (ONLY ONCE)
-  const verifyChannel = await client.channels.fetch('1428709658415337605');
-  await sendVerifyMessage(verifyChannel);
-});
+  // SEND VERIFY BUTTON (DAILY)
+  async function sendOrReplaceVerificationMessage() {
+  try {
+    const channel = await client.channels.fetch(process.env.VERIFY_CHANNEL_ID);
+
+    // Delete old verification message if it exists
+    if (lastVerifyMessageId) {
+      try {
+        const oldMsg = await channel.messages.fetch(lastVerifyMessageId);
+        await oldMsg.delete();
+      } catch (e) {
+        // message might already be deleted — ignore safely
+      }
+    }
+
+    const verifyButton = new ButtonBuilder()
+      .setCustomId('start_verify')
+      .setLabel('Start Verification')
+      .setStyle(ButtonStyle.Primary);
+
+    const newMsg = await channel.send({
+      content: "Ayo! Let’s see if you are a real human beauliever 👀\nClick the button below to start verification:",
+      components: [
+        new ActionRowBuilder().addComponents(verifyButton)
+      ]
+    });
+
+    // Save new message ID
+    lastVerifyMessageId = newMsg.id;
+
+  } catch (err) {
+    console.error('Failed to send/replace verification message:', err);
+  }
+}
+
 
 /* =====================
    INTERACTIONS
@@ -362,6 +395,11 @@ setInterval(() => {
     }
   }
 }, 60000);
+
+// Refresh verification message every 24 hours
+setInterval(() => {
+  sendOrReplaceVerificationMessage();
+}, 24 * 60 * 60 * 1000);
 
 /* =====================
    VERIFY BUTTON MESSAGE
