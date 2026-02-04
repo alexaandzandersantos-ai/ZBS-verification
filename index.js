@@ -429,6 +429,14 @@ setInterval(() => {
   sendOrReplaceVerificationMessage();
 }, 24 * 60 * 60 * 1000);
 
+client.on('error', err => {
+  console.error('Discord client error:', err);
+});
+
+process.on('unhandledRejection', err => {
+  console.error('Unhandled promise rejection:', err);
+});
+
 
 /* =====================
    LOGIN
