@@ -38,6 +38,9 @@ const client = new Client({
   partials: [Partials.Channel]
 });
 
+let lastVerificationDay = null;
+
+
 /* =====================
    STORAGE
 ===================== */
@@ -79,10 +82,13 @@ async function sendOrReplaceVerificationMessage() {
 /* =====================
    READY
 ===================== */
-client.once('ready', async () => {
+client.once('ready', () => {
   console.log('Bot online as ' + client.user.tag);
-sendOrReplaceVerificationMessage();
+
+  lastVerificationDay = new Date().toDateString();
+  sendOrReplaceVerificationMessage();
 });
+
 
 /* =====================
    INTERACTIONS
@@ -91,6 +97,10 @@ client.on('interactionCreate', async interaction => {
 
   /* START VERIFY BUTTON */
   if (interaction.isButton() && interaction.customId === 'start_verify') {
+  if (!interaction.deferred && !interaction.replied) {
+    await interaction.deferUpdate();
+  }
+
     const modal = new ModalBuilder()
       .setCustomId('phone_modal')
       .setTitle('ZBS OTP Verification');
@@ -424,10 +434,16 @@ setInterval(async () => {
   }
 }, 60000);
 
-// Refresh verification message every 24 hours
+// Check every minute if we need to refresh the verification message
 setInterval(() => {
-  sendOrReplaceVerificationMessage();
-}, 24 * 60 * 60 * 1000);
+  const today = new Date().toDateString();
+
+  if (lastVerificationDay !== today) {
+    lastVerificationDay = today;
+    sendOrReplaceVerificationMessage();
+  }
+}, 60 * 1000);
+
 
 client.on('error', err => {
   console.error('Discord client error:', err);
