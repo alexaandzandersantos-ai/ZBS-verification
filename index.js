@@ -1,3 +1,6 @@
+const dns = require('dns');
+dns.setDefaultResultOrder('ipv4first');
+
 const http = require('http');
 
 const PORT = process.env.PORT || 3000;
@@ -99,26 +102,27 @@ client.on('interactionCreate', async interaction => {
 
   /* START VERIFY BUTTON */
   if (interaction.isButton() && interaction.customId === 'start_verify') {
-  if (!interaction.deferred && !interaction.replied) {
-    await interaction.deferUpdate();
+  const modal = new ModalBuilder()
+    .setCustomId('phone_modal')
+    .setTitle('ZBS OTP Verification');
+
+  const phoneInput = new TextInputBuilder()
+    .setCustomId('phone_number')
+    .setLabel('Enter your phone number, +63')
+    .setStyle(TextInputStyle.Short)
+    .setRequired(true);
+
+  modal.addComponents(
+    new ActionRowBuilder().addComponents(phoneInput)
+  );
+
+  try {
+    return await interaction.showModal(modal);
+  } catch (err) {
+    return; // interaction expired, ignore safely
   }
+}
 
-    const modal = new ModalBuilder()
-      .setCustomId('phone_modal')
-      .setTitle('ZBS OTP Verification');
-
-    const phoneInput = new TextInputBuilder()
-      .setCustomId('phone_number')
-      .setLabel('Enter your phone number, +63')
-      .setStyle(TextInputStyle.Short)
-      .setRequired(true);
-
-    modal.addComponents(
-      new ActionRowBuilder().addComponents(phoneInput)
-    );
-
-    return interaction.showModal(modal);
-  }
 
 /* ADMIN APPROVE / REJECT */
 if (
