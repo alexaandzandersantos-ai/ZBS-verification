@@ -51,6 +51,9 @@ client.on('debug', console.log);
 ===================== */
 client.sessions = new Map();
 let lastVerifyMessageId = null;
+client.commands = new Map();
+client.commands.set('refreshverify', require('./commands/refreshverify'));
+
 
 // SEND VERIFY BUTTON (DAILY)
 async function sendOrReplaceVerificationMessage() {
@@ -63,6 +66,7 @@ async function sendOrReplaceVerificationMessage() {
         await oldMsg.delete();
       } catch (e) {}
     }
+client.sendOrReplaceVerificationMessage = sendOrReplaceVerificationMessage;
 
     const verifyButton = new ButtonBuilder()
       .setCustomId('start_verify')
@@ -99,6 +103,12 @@ client.once('ready', () => {
    INTERACTIONS
 ===================== */
 client.on('interactionCreate', async interaction => {
+
+  /* MANUAL COMMAND VERIFICATION STARTUP */
+if (interaction.isChatInputCommand()) {
+  const command = client.commands.get(interaction.commandName);
+  if (command) return command.execute(interaction, client);
+}
 
   /* START VERIFY BUTTON */
   if (interaction.isButton() && interaction.customId === 'start_verify') {
@@ -440,15 +450,6 @@ setInterval(async () => {
   }
 }, 60000);
 
-// Check every minute if we need to refresh the verification message
-setInterval(() => {
-  const today = new Date().toDateString();
-
-  if (lastVerificationDay !== today) {
-    lastVerificationDay = today;
-    sendOrReplaceVerificationMessage();
-  }
-}, 60 * 1000);
 
 
 client.on('error', err => {

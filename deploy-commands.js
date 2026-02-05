@@ -2,6 +2,8 @@ require('dotenv').config();
 const { REST, Routes } = require('discord.js');
 
 const commands = [
+  require('./commands/refreshverify').data.toJSON(),
+  // keep your other commands here
   require('./commands/verify').data.toJSON(),
   require('./commands/otp').data.toJSON()
 ];
@@ -24,4 +26,6 @@ const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
   } catch (error) {
     console.error(error);
   }
+  
 })();
+
