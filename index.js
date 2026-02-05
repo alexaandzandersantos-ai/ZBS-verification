@@ -458,3 +458,5 @@ process.on('unhandledRejection', err => {
    LOGIN
 ===================== */
 client.login(process.env.TOKEN);
+console.log('TOKEN present:', !!process.env.TOKEN);
+
