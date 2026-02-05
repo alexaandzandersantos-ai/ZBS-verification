@@ -40,6 +40,8 @@ const client = new Client({
 
 let lastVerificationDay = null;
 
+client.on('debug', console.log);
+
 
 /* =====================
    STORAGE
@@ -458,5 +460,4 @@ process.on('unhandledRejection', err => {
    LOGIN
 ===================== */
 client.login(process.env.TOKEN);
-console.log('TOKEN present:', !!process.env.TOKEN);
 
